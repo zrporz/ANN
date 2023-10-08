@@ -1,0 +1,267 @@
+########################
+# Additional Files
+########################
+# log
+
+########################
+# Filled Code
+########################
+# ..\codes\loss.py:1
+        return np.mean(np.sum((target-input) ** 2,axis=1))
+
+# ..\codes\loss.py:2
+        return (input - target) * 2 / input.shape[0]
+
+# ..\codes\loss.py:3
+        exp_input = np.exp(input)
+        return np.mean(np.sum(-target * np.log(exp_input / np.sum(exp_input,axis=1,keepdims=True)),axis=1),axis=0)
+
+# ..\codes\loss.py:4
+        exp_input = np.exp(input)
+        return -target + np.sum(target,axis=1,keepdims=True) / np.sum(exp_input,axis=1,keepdims=True) * exp_input
+
+# ..\codes\loss.py:5
+        x_tn = np.expand_dims(input[target==1],axis=1)
+        return np.mean(np.sum(np.maximum(0, self.margin - x_tn + input),axis=1)) - self.margin
+
+# ..\codes\loss.py:6
+        # print(input)
+        mask_tn = (target == 1)
+        result = np.zeros(input.shape)
+        mask_no_zero = input - np.expand_dims(input[mask_tn],axis=1) + self.margin > 0
+        result[mask_no_zero] = 1
+        result[mask_tn] = -np.sum(mask_no_zero,axis=1) + 1
+        return result
+
+# ..\codes\loss.py:7
+        exp_input = np.exp(input)
+        # print(exp_input==0)
+        softmax_input = exp_input / np.sum(exp_input,axis=1,keepdims=True)
+        one_minus_alpha = [1.0- self.alpha[i] for i in range(10)]
+        return -np.mean(np.sum((self.alpha * target + one_minus_alpha*(1-target))*((1-softmax_input)**self.gamma) * target * np.log(softmax_input),axis=1))
+
+# ..\codes\loss.py:8
+        exp_input = np.exp(input)
+        softmax_input = exp_input / np.sum(exp_input,axis=1,keepdims=True)
+        one_minus_alpha = [1.0- self.alpha[i] for i in range(10)]
+        # output = (self.alpha * target + one_minus_alpha*(1-target))*target*(self.gamma *(1-softmax_input)**(self.gamma-1)*np.log(softmax_input) - (1-softmax_input)**self.gamma/softmax_input)
+        output1 = -np.sum((self.alpha * target + one_minus_alpha*(1-target)) * target * (-softmax_input)*(-np.log(softmax_input) * self.gamma * (1-softmax_input)**(self.gamma-1)+(1-softmax_input)**self.gamma/softmax_input),axis=1,keepdims=True)*softmax_input
+
+        output1 -= (self.alpha * target + one_minus_alpha*(1-target)) * target * (-np.log(softmax_input) * self.gamma * (1-softmax_input)**(self.gamma-1)+(1-softmax_input)**self.gamma/softmax_input) * softmax_input
+        # output = output*(softmax_input - softmax_input * np.sum(softmax_input, axis=1, keepdims=True))
+        # print(output==output1)
+        return output1
+        # return output1
+
+# ..\codes\layers.py:1
+        mask = input > 0
+        output = np.zeros(input.shape)
+        output[mask] = self.lam * input[mask]
+        output[mask==False] = self.lam * self.alpha * (np.exp(input[mask==False]) - 1)
+        self._saved_for_backward(output)
+        return output
+
+# ..\codes\layers.py:2
+        output = self._saved_tensor
+        mask = output > 0
+        output[mask] = grad_output[mask] * self.lam
+        output[mask==False] = grad_output[mask==False] * (output[mask==False]+ self.lam *self.alpha)
+        return output
+
+# ..\codes\layers.py:3
+        output = input / (1+np.exp(-input)) # x * sigmoid(x)
+        self._saved_for_backward(input)
+        return output
+
+# ..\codes\layers.py:4
+        input = self._saved_tensor
+        output = input / (1+np.exp(-input)) # x * sigmoid(x)
+        return grad_output * (output + (1-output) / (1+np.exp(-input))) # swish(x) + (1-swish(x)) * sigmoid(x)
+
+# ..\codes\layers.py:5
+        self._saved_for_backward(input)
+        output = 0.5 * input * (1 + np.tanh(np.sqrt(2/np.pi) * (input + 0.044715 * (input ** 3))))
+        return output
+
+# ..\codes\layers.py:6
+        delta = 1e-05
+        input = self._saved_tensor
+        def gelu(x):
+             return 0.5 * x * (1 + np.tanh(np.sqrt(2/np.pi) * (x + 0.044715 * (x ** 3))))
+        return grad_output * (gelu(input+delta)- gelu(input))/delta
+
+# ..\codes\layers.py:7
+        self._saved_for_backward(input)
+        if self.ismask:
+            self.mask = generate_array(0.8)
+            output = np.matmul(input,self.W*self.mask) + self.b * self.mask
+        else:
+            output = np.matmul(input,self.W) + self.b
+        return output
+
+# ..\codes\layers.py:8
+        # print(grad_output.shape)
+        input = self._saved_tensor
+        if self.ismask:
+            grad_output *= self.mask
+        self.grad_W = np.matmul(input.T, grad_output)
+        self.grad_b = np.sum(grad_output,axis=0)
+        return np.matmul(grad_output, self.W.T)
+
+
+########################
+# References
+########################
+
+########################
+# Other Modifications
+########################
+# _codes\loss.py -> ..\codes\loss.py
+# 3 -
+# _codes\run_mlp.py -> ..\codes\run_mlp.py
+# 3 - from layers import Selu, Swish, Linear, Gelu
+# 3 + from layers import Selu, Swish, Linear, Gelu, Relu, Sigmoid
+# 3 ?                                             +++++++++++++++
+# 7 -
+# 8 -
+# 7 + import json
+# 8 + import time
+# 9 + from datetime import datetime
+# 10 + import argparse
+# 11 + parser = argparse.ArgumentParser(description='test')
+# 12 + parser.add_argument('--act', type=str,default="RELU")
+# 13 + parser.add_argument('--loss', type=str,default="SoftmaxCrossEntropy")
+# 14 + parser.add_argument('--bs', type=int, default=100)
+# 15 + parser.add_argument('--hs', type=int, default=784)
+# 16 + parser.add_argument('--lr', type=float,default=1e-4)
+# 17 + parser.add_argument('--wd', type=float,default=1e-3)
+# 18 + parser.add_argument('--mom', type=float,default=0.9)
+# 19 + opt = parser.parse_args()
+# 14 - model.add(Linear('fc1', 784, 10, 0.01))
+# 14 ?                              ^^
+# 25 + model.add(Linear('fc1', 784, opt.hs, 0.01,False))
+# 25 ?                              ^^^^^^      ++++++
+# 26 + if opt.act=="RELU":
+# 27 +     model.add(Relu('relu1'))
+# 28 + elif opt.act=="SELU":
+# 29 +     model.add(Selu('selu1'))
+# 30 + elif opt.act=="Swish":
+# 31 +     model.add(Swish('swish1'))
+# 32 + elif opt.act=="GELU":
+# 33 +     model.add(Gelu('gelu1'))
+# 34 + elif opt.act=="Sigmoid":
+# 35 +     model.add(Sigmoid('sigmoid1'))
+# 36 + else:
+# 37 +     raise ValueError("Unknown activation function: "+opt.act)
+# 39 + # model.add(Linear('fc2', 784, 784, 0.01))
+# 40 + # if opt.act=="RELU":
+# 41 + #     model.add(Relu('relu2'))
+# 42 + # elif opt.act=="SELU":
+# 43 + #     model.add(Selu('selu2'))
+# 44 + # elif opt.act=="Swish":
+# 45 + #     model.add(Swish('swish2'))
+# 46 + # elif opt.act=="GELU":
+# 47 + #     model.add(Gelu('gelu2'))
+# 48 + # elif opt.act=="Sigmoid":
+# 49 + #     model.add(Sigmoid('sigmoid2'))
+# 50 + # else:
+# 51 + #     raise ValueError("Unknown activation function: "+opt.act)
+# 52 +
+# 53 + model.add(Linear('fc2', opt.hs, 10, 0.01))
+# 54 +
+# 55 + if opt.loss=="MSE":
+# 16 - loss = MSELoss(name='loss')
+# 16 ?                     ^    ^
+# 56 +     loss = MSELoss(name="mseloss")
+# 56 ? ++++                    ^^^^    ^
+# 57 + elif opt.loss=="SoftmaxCrossEntropy":
+# 58 +     loss = SoftmaxCrossEntropyLoss(name='SoftmaxCrossEntropyLoss')
+# 59 + elif opt.loss=="Hinge":
+# 60 +     loss = HingeLoss(name="HingeLoss")
+# 61 + elif opt.loss=="Focal":
+# 62 +     loss = FocalLoss(name="FocalLoss")
+# 63 + else:
+# 64 +     raise ValueError("Unknown loss function: "+opt.loss)
+# 25 -     'learning_rate': 0.0,
+# 25 ?                      ^ ^
+# 73 +     'learning_rate': opt.lr,
+# 73 ?                      ^^^ ^^
+# 26 -     'weight_decay': 0.0,
+# 26 ?                     ^ ^
+# 74 +     'weight_decay': opt.wd,
+# 74 ?                     ^^^ ^^
+# 27 -     'momentum': 0.0,
+# 27 ?                 ^ ^
+# 75 +     'momentum': opt.mom,
+# 75 ?                 ^^^ ^^^
+# 28 -     'batch_size': 100,
+# 28 ?                   ^^^
+# 76 +     'batch_size': opt.bs,
+# 76 ?                   ^^^^^^
+# 82 + class Log:
+# 83 +     def __init__(self,log):
+# 84 +         self.log = log
+# 85 +     def append(self,key,value):
+# 86 +         self.log[key].append(value)
+# 87 +     def save(self):
+# 88 +         name = ""
+# 89 +         for layer_name in self.log["model"]:
+# 90 +             name += layer_name+"_"
+# 91 +         name += self.log["loss"] +"_"
+# 92 +         name += time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+# 93 +         with open(f"./log/hyperparam/{name}.json","w") as f:
+# 94 +             f.write(json.dumps(self.log,indent=4))
+# 96 + print(config)
+# 97 + for layer in model.layer_list:
+# 98 +     print(layer.name)
+# 99 + print(loss.name)
+# 100 + model_print_list = [layer.name for layer in model.layer_list]
+# 101 + log = Log({"model":model_print_list,"time":0,"loss":loss.name,"config":config,"train_loss":[],"train_acc":[],"test_loss":[],"test_acc":[]})
+# 102 + time1 = datetime.now()
+# 37 -     train_net(model, loss, config, train_data, train_label, config['batch_size'], config['disp_freq'])
+# 105 +     train_net(model, loss, config, train_data, train_label, config['batch_size'], config['disp_freq'],log)
+# 105 ?                                                                                                      ++++
+# 41 -         test_net(model, loss, test_data, test_label, config['batch_size'])
+# 109 +         test_net(model, loss, test_data, test_label, config['batch_size'], log)
+# 109 ?                                                                          +++++
+# 110 + time2 = datetime.now()
+# 111 + log.log["time"] = (time2-time1).total_seconds()
+# 112 + log.save()
+# _codes\layers.py -> ..\codes\layers.py
+# 3 + def generate_array(p):
+# 4 +     # 生成一个大小为784的全零数组
+# 5 +     arr = np.zeros(784)
+# 6 +
+# 7 +     # 计算需要设置为1的个数
+# 8 +     num_ones = int(p * 784)
+# 9 +
+# 10 +     # 随机选择num_ones个位置，并将其设置为1
+# 11 +     arr[:num_ones] = 1
+# 12 +
+# 13 +     # 打乱数组顺序
+# 14 +     np.random.shuffle(arr)
+# 15 +
+# 16 +     return arr
+# 65 +     lam = 1.0507
+# 66 +     alpha = 1.67326
+# 97 -
+# 138 +
+# 139 +
+# 99 -     def __init__(self, name, in_num, out_num, init_std):
+# 141 +     def __init__(self, name, in_num, out_num, init_std,ismask=False):
+# 141 ?                                                       +++++++++++++
+# 153 +         self.ismask = ismask
+# _codes\solve_net.py -> ..\codes\solve_net.py
+# 3 -
+# 15 - def train_net(model, loss, config, inputs, labels, batch_size, disp_freq):
+# 14 + def train_net(model, loss, config, inputs, labels, batch_size, disp_freq, log):
+# 14 ?                                                                         +++++
+# 42 +             log.append("train_loss",np.mean(loss_list))
+# 43 +             log.append("train_acc",np.mean(acc_list))
+# 48 - def test_net(model, loss, inputs, labels, batch_size):
+# 49 + def test_net(model, loss, inputs, labels, batch_size,log):
+# 49 ?                                                     ++++
+# 62 +
+# 63 +     log.append("test_loss",np.mean(loss_list))
+# 64 +     log.append("test_acc",np.mean(acc_list))
+
