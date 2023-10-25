@@ -1,0 +1,5 @@
+{
+    "drop_rate": 0.5,
+    "hidden_features": 1024,
+    "learning_rate": 5e-4
+}

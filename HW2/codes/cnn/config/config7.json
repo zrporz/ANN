@@ -1,0 +1,31 @@
+{
+    "layer1": {
+        "conv":{
+            "in_channel":3,
+            "out_channel":256,
+            "kernel":5,
+            "stride":1,
+            "padding":2
+        },
+        "maxpool":{
+            "kernel":5,
+            "stride":3,
+            "padding":2
+        }
+    },
+    "layer2": {
+        "conv":{
+            "in_channel":256,
+            "out_channel":1024,
+            "kernel":7,
+            "stride":1,
+            "padding":3
+        },
+        "maxpool":{
+            "kernel":5,
+            "stride":3,
+            "padding":2
+        }
+    },
+    "drop_rate":[0.4,0.4]
+}
