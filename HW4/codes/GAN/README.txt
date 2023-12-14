@@ -1,0 +1,3 @@
+在MLPGAN.py中实现了基于MLP的GAN模型，可以通过use_mlp指定使用
+通过do_train来开启训练模式
+在命令行指定add_interpolation生成插值采样结果
